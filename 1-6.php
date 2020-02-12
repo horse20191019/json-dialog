@@ -59,26 +59,16 @@ get_header(); ?>
       text-align: center;
     }
 
-    .alexa-box, .hs-box input{
+    .alexa-box{
       width: 27%;
       height: 50px;
       border: none;
       border-radius: 4px;
       padding-left: 10px;
       color: #ffffff;
+      
     }
-    .hs-box{
-    	width: 27%;
-    }
-    .hs-box input{
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .hs-box input{
-      background: #024242;
-    }
-
-    .as, .ad, .hs-box input.active{
+    .hs, .as, .ad{
       background: #5384ff;
     }
     
@@ -101,6 +91,11 @@ get_header(); ?>
       background: #65a8fe;
       padding-left: 10px;
       padding-right: 10px;
+    }
+
+    p.add-new{
+      font-weight: bold;
+      color: #000;
     }
 
     input{
@@ -268,96 +263,84 @@ get_header(); ?>
         
         var ajax_object = {"ajax_url":"http:\/\/noiman.com/\/wp-admin\/admin-ajax.php"};
         
-    		// jQuery.get(ajax_object.ajax_url, {'action':'hello', 'param':data.boxes}, function(response) {
-    		//     alert("result: " + response); 
-    		//  });
-
-
-        $.ajax({
-            url : ajax_object.ajax_url,
-            type : "get",
-            async: false,
-            data: {
-              'action':'hello', 
-              'param':data.boxes
-            },
-            success : function(userStatus) {
-              alert("result: " + response); 
-            },
-            error: function() {
-               connectionError();
-            }
-         });
-
-
-
-
+		jQuery.get(ajax_object.ajax_url, {'action':'hello', 'param':data.boxes}, function(response) {
+		    alert("result: " + response); 
+		 });
          
       });
-	  
-	  /****** Human Says DropDown ******/
 
-      $(document).on('click', '.add-new', function(){
-        if(!$('.new-input').length){
-          let len = $(this).parent().find('input').length;
-          $(this).before('<input type="text" class="new-input" idx="' + len + '">');
-        }
-        $('.new-input').focus();
-      });
+      /* Human Says DropDown */
 
-      $(document).on('change', '.hs-box input', function(){
-        
-        let txt = $(this).val();
-        let hs_box = $(this).parent();
+      $(document).on('click', '.hs', function(){
+        if( $('#hs-dropdown').css('display') == 'none'){
+          $('.hs-item').remove();
+          $('.add-input').remove();
+          let box_id = $(this).attr('box_id');
+          if( !$(this).hasClass('new') ){
+            let items = data.boxes[box_id].cases;
 
-        if($(this).hasClass('new-input')){   /* Add */
-          if(!$(this).parent().attr('box_id')){
-            hs_box.attr('box_id', data.boxes.length);
-            data.boxes.push(
-              {
-                id: data.boxes.length, 
-                action: 'hs',
-                cases:[
-                  {
-                    content: txt,
-                    next: 0
-                  }
-                ]
-              });
+            $.each(items, function (index, item){
             
-            if($(this).parent().parent('.alexa-row').attr('rowid') - 1){
-              data.boxes[$(this).parent().parent('.alexa-row').prev().find('.box').attr('box_id')].cases[0].next = data.boxes.length - 1;
-            }
-          }else{
-            let box_id = parseInt(hs_box.attr('box_id'));
-            data.boxes[box_id].cases.push({content: txt, next:0});
+              $('.add-new').before('<div class="hs-item" idx="' + items.indexOf(item) + '">' +
+                                      '<input readonly="readonly" value="' + item.content + '">' + 
+                                      '<div>' + 
+                                        '<button class="edit">Edit</button>' + 
+                                        '<!--<button class="delete">Delete</button>-->' +
+                                      '</div>' +
+                                    '</div>');
+            });
           }
-          hs_box.attr('content', $(this).val());
-          hs_box.attr('idx', hs_box.find('input').length - 1) ;
-          $(this).removeClass('new-input');
-          $(this).trigger('click');
-        }else{ /*  Edit  */
-          $(this).parent().attr('content', $(this).val());
-          $(this).parent().attr('idx', $(this).attr('idx')) ;
-          let box_id = $(this).parent().attr('box_id');
-          let idx = $(this).attr('idx');
-          data.boxes[box_id].cases[idx].content = $(this).val();
-        }
+          if(!$('.add-input').length){
+            $('#hs-dropdown').prepend('<input class="add-input" type="text">');
+          }
+          
+          let offset = $(this).offset();
+          let width = $('.alexa-box').width();
+          let dropdown = $('#hs-dropdown');
+          dropdown.animate({top: offset.top+ 53 - $('.sub_page_header').offset().top, left: offset.left, width: width}, 10, function(){ 
+            $(this).slideDown(function(){
+              $('#hs-dropdown .add-input').focus();
+            });
+          });
+          selected_input = $(this);
 
+        }
         
       });
-
-      $(document).on('click', '.hs-box input', function(e){
+      
+      $(document).on('click', '.edit', function(e){
         e.preventDefault();
-        $(this).parent().find('input').removeClass('active');
-        $(this).addClass('active');
-        $(this).parent().attr('content', $(this).val());
-        $(this).parent().attr('idx', $(this).attr('idx')) ;
-        $(this).parent().trigger('change');
-        $(this).focus();
+        $(this).parents('.hs-item').find('input').attr('readonly', false).focus();
       });
+      
 
-      $(document).on('change', '.hs-box', function(){
+      $(document).on('click', '.delete', function(e){
+        
+        $(this).parents('.hs-item').remove();
+        e.preventDefault();
+      });
+      
+
+      $(document).on('click', '#hs-dropdown .hs-item input', function(e){
+        if($(this).attr('readonly') == 'readonly'){
+          selected_input.val($(this).val());
+          selected_input.attr('idx', $(this).parent().attr('idx')) ;
+          selected_input.trigger('change');
+          $("#hs-dropdown").slideUp();
+        }
+      });
+      
+
+      $(document).on('change', '#hs-dropdown .hs-item input', function(e){
+        $(this).attr('readonly','readonly');
+        let box_id = selected_input.attr('box_id');
+        let idx = $(this).parent().attr('idx');
+        data.boxes[box_id].cases[idx].content = $(this).val();
+          
+      });
+      
+
+      $(document).on('change', '.hs', function(){
         if($(this).hasClass('new')){
 
           $(this).removeClass('new');
@@ -377,7 +360,63 @@ get_header(); ?>
         $(this).blur();
       });
 
-           /* Alexa Says DropDown */
+      $(document).click(function (e) {
+          if (!$(e.target).hasClass("dropdown") && $(e.target).parents("#hs-dropdown").length === 0) 
+          {
+              $("#hs-dropdown").slideUp();
+          }
+      });
+
+      $(document).on('click', '.add-new', function(){
+        if(!$('.add-input').length){
+           $('#hs-dropdown').prepend('<input class="add-input" type="text">');
+        }
+        
+        $('.add-input').focus();
+      });
+
+      $(document).on('change', '.add-input', function(){
+        let txt = $(this).val();
+
+        $('.add-new').before('<div class="hs-item" idx="' + $('#hs-dropdown .hs-item').length + '">' +
+                                    '<input readonly="readonly" value="' + txt + '">' + 
+                                    '<div>' + 
+                                      '<button class="edit">Edit</button>' + 
+                                      '<!--<button class="delete">Delete</button>-->' +
+                                    '</div>' +
+                                  '</div>');
+                                  
+
+        if(!selected_input.attr('box_id')){
+          selected_input.attr('box_id', data.boxes.length);
+          data.boxes.push(
+            {
+              id: data.boxes.length, 
+              action: 'hs',
+              cases:[
+                {
+                  content: $(this).val(),
+                  next: 0
+                }
+              ]
+            });
+          
+          if(selected_input.parent('.alexa-row').attr('rowid') - 1){
+            data.boxes[selected_input.parent('.alexa-row').prev().find('input.alexa-box').attr('box_id')].cases[0].next = data.boxes.length - 1;
+          }
+          
+        }else{
+          let box_id = parseInt(selected_input.attr('box_id'));
+          data.boxes[box_id].cases.push({content: txt, next:0});
+        }
+        selected_input.val($(this).val());
+        selected_input.attr('idx', $('#hs-dropdown .hs-item').length - 1) ;
+        selected_input.trigger('change');
+
+        $(this).remove();
+      });
+
+      /* Alexa Says DropDown */
 
       $(document).on('click', '.as', function(){
         if( $('#as-dropdown').css('display') == 'none'){
@@ -421,8 +460,9 @@ get_header(); ?>
         selected_input.parent('.alexa-row').nextAll('.alexa-row').remove();
         row_id = selected_input.parent('.alexa-row').attr('rowid');
         showDialog( 'as', $(this).attr('idx'), 0);
-        let box_id = selected_input.parent('.alexa-row').prev().find('.box').attr('box_id');
-        let idx = selected_input.parent('.alexa-row').prev().find('.box').attr('idx');
+        
+        let box_id = selected_input.parent('.alexa-row').prev().find('input.alexa-box').attr('box_id');
+        let idx = selected_input.parent('.alexa-row').prev().find('input.alexa-box').attr('idx');
         data.boxes[box_id].cases[idx].next = selected_input.attr('box_id');
         
       });
@@ -456,9 +496,9 @@ get_header(); ?>
           $('.new').removeClass('new').replaceWith('<div class="alexa-box"></div>');
           $('.dropdown').slideUp();
           if(data.boxes.length - 1){
-            
-            let box_id = $(this).parent('.alexa-row').prev().find('.box').attr('box_id');
-            let idx = $(this).parent('.alexa-row').prev().find('.box').attr('idx');
+           
+            let box_id = $(this).parent('.alexa-row').prev().find('input.alexa-box').attr('box_id');
+            let idx = $(this).parent('.alexa-row').prev().find('input.alexa-box').attr('idx');
             data.boxes[box_id].cases[idx].next = data.boxes.length - 1;
           }
           row_id ++;
@@ -473,7 +513,7 @@ get_header(); ?>
 
 
 
-      /******** Alexa Does Dropdown  ***************/
+      /* Alexa Does Dropdown */
 
       $(document).on('click', '.ad', function(){
         if( $('#ad-dropdown').css('display') == 'none'){
@@ -523,13 +563,15 @@ get_header(); ?>
           $('.new').removeClass('new').replaceWith('<div class="alexa-box"></div>');
           $('.dropdown').slideUp();
           if(data.boxes.length - 1){
-            let box_id = $(this).parent('.alexa-row').prev().find('.box').attr('box_id');
-            let idx = $(this).parent('.alexa-row').prev().find('.box').attr('idx');
+           
+            let box_id = $(this).parent('.alexa-row').prev().find('input.alexa-box').attr('box_id');
+            let idx = $(this).parent('.alexa-row').prev().find('input.alexa-box').attr('idx');
             data.boxes[box_id].cases[idx].next = data.boxes.length - 1;
           }
           row_id ++;
           newRow(row_id, 'ad');
-          $('.hs.new').trigger('click');
+          
+           $('.hs.new').trigger('click');
           
         }else{
           let box_id = parseInt($(this).attr('box_id'));
@@ -538,9 +580,10 @@ get_header(); ?>
         $(this).blur();
       });
 
-      /****** functions  *******/
+      /* functions */
 
       function showDialog(action, box_id, idx){
+        
         ++ row_id;
         box_id = data.boxes[box_id].cases[idx].next;
         while(box_id){
@@ -553,6 +596,8 @@ get_header(); ?>
         }
 
         newRow(row_id, action);
+        
+        
       }
 
       function createRow(row_id, box_id, action, text){
@@ -564,21 +609,7 @@ get_header(); ?>
         let row_end = '</div>';
         switch(action){
           case 'hs':
-            let items = data.boxes[box_id].cases;
-
-            let hs_box = '';
-
-            $.each(items, function (index, item){
-              if(!index){
-                hs_box = hs_box + '<input type="text" class="active" idx="' + items.indexOf(item) + '" value="' + item.content + '">';
-              }else{
-                hs_box = hs_box + '<input type="text" idx="' + items.indexOf(item) + '" value="' + item.content + '">';
-              }
-              
-            });
-            hs_box = '<div class="hs-box box" box_id="' + box_id + '" content="' + text + '" idx="0">' +
-             hs_box + '<button class="add-new">Add New</button></div>';
-            row = row_start + id_input + hs_box + empty_input + empty_input + row_end;
+            row = row_start + id_input + '<input class="hs alexa-box" readonly="readonly" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0">' + empty_input + empty_input + row_end;
             break;
           case 'as':
             row = row_start + id_input + empty_input + '<input class="as alexa-box" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0">' + empty_input + row_end;
@@ -596,9 +627,9 @@ get_header(); ?>
         let empty_input = '<div class="alexa-box"></div>';
         let row_start = '<div class="alexa-row" rowid="' + id + '">';
         let row_end = '</div>';
-        let hs_input = '<div class="hs-box new box"><button class="add-new">Add New</button></div>';
-        let as_input = '<input class="as alexa-box new box" type="text" value="" idx="0">';
-        let ad_input = '<input  readonly="readonly" class="ad alexa-box new box" type="text" value="" idx="0">';
+        let hs_input = '<input  readonly="readonly" class="hs alexa-box new" type="text" value="" idx="0">';
+        let as_input = '<input class="as alexa-box new" type="text" value="" idx="0">';
+        let ad_input = '<input  readonly="readonly" class="ad alexa-box new" type="text" value="" idx="0">';
         if(id == 1){
           row = row_start + id_input + hs_input + as_input + ad_input + row_end;
         }else{
