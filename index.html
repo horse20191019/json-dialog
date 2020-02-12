@@ -236,7 +236,8 @@
           sub: ['light on', 'light off']
         }, 
         {
-          main: 'music streaming'
+          main: 'music streaming',
+          sub: []
         }
       ];
     
@@ -508,10 +509,17 @@
           selected_input.attr('idx', $(this).parent().attr('idx'));
           selected_input.trigger('change');
           $("#ad-dropdown").slideUp();
+
+          selected_input.parent().find('.sub').val('');
+
+          if(!ad_contents[$(this).parent().attr('idx')].sub.length){
+            selected_input.parent().find('.sub').val($(this).val()).trigger('change');
+
+          }
         }
       });
 
-       $(document).on('click', '#sub-ad-dropdown .sub-ad-item input', function(e){
+      $(document).on('click', '#sub-ad-dropdown .sub-ad-item input', function(e){
         if($(this).attr('readonly') == 'readonly'){
           selected_input.val($(this).val());
           selected_input.attr('idx', $(this).parent().attr('idx'));
@@ -531,34 +539,7 @@
                                     '</div>' +
                                   '</div>');
                                   
-
-        // if(!selected_input.attr('box_id')){
-        //   selected_input.attr('box_id', data.boxes.length);
-        //   data.boxes.push(
-        //     {
-        //       id: data.boxes.length, 
-        //       action: 'hs',
-        //       cases:[
-        //         {
-        //           content: $(this).val(),
-        //           next: 0
-        //         }
-        //       ]
-        //     });
-          
-        //   if(selected_input.parent('.alexa-row').attr('rowid') - 1){
-        //     data.boxes[selected_input.parent('.alexa-row').prev().find('input.alexa-box').attr('box_id')].cases[0].next = data.boxes.length - 1;
-        //   }
-          
-        // }else{
-        //   let box_id = parseInt(selected_input.attr('box_id'));
-        //   data.boxes[box_id].cases.push({content: txt, next:0});
-        // }
-        // selected_input.val($(this).val());
-        // selected_input.attr('idx', $('#hs-dropdown .hs-item').length - 1) ;
-        // selected_input.trigger('change');
-
-        ad_contents.push({main: txt});
+        ad_contents.push({main: txt, sub: []});
 
         $(this).remove();
       });
@@ -573,7 +554,7 @@
                                       '<!--<button class="delete">Delete</button>-->' +
                                     '</div>' +
                                   '</div>');
-
+        ad_contents[selected_input.parent().find('.main').attr('idx')].sub.push($(this).val());
         $(this).remove();
       });
 
@@ -584,8 +565,15 @@
           }
       });
 
+      $(document).click(function (e) {
+          if (!$(e.target).hasClass("dropdown") && $(e.target).parents("#sub-ad-dropdown").length === 0) 
+          {
+              $("#sub-ad-dropdown").slideUp();
+          }
+      });
+
       $(document).on('change', '.ad.main', function(){
-        // $('.ad.sub').trigger('click');
+        // alert("adfadfafd");
       })
 
       $(document).on('change', '.ad.sub', function(){
@@ -619,7 +607,7 @@
           $('.hs.new').trigger('click');
           
         }else{
-          let box_id = parseInt($(this).attr('box_id'));
+          let box_id = parseInt($(this).parent().attr('box_id'));
           data.boxes[box_id].cases[0].content = $(this).val();
         }
         $(this).blur();
