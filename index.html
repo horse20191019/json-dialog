@@ -580,6 +580,8 @@
         if($(this).parent().hasClass('new')){
 
             $(this).parent().attr('box_id', data.boxes.length);
+            let text = $(this).val();
+
 
             data.boxes.push(
             {
@@ -587,7 +589,7 @@
               action: 'ad',
               cases:[
                 {
-                  content: $(this).val(),
+                  content: [$(this).parent().find('.main').val(), $(this).val()],
                   next: 0
                 }
               ]
@@ -603,9 +605,31 @@
             data.boxes[box_id].cases[idx].next = data.boxes.length - 1;
           }
           row_id ++;
-          newRow(row_id, 'ad');
-          $('.hs.new').trigger('click');
-          
+
+          $.each(data.boxes, function (index, item){
+            if(item.action == 'ad'){
+            	if(item.cases[0].content[1] == text){
+            		let box_id = item.id;
+            		if(box_id < data.boxes.length - 1){
+            			box_id = data.boxes[box_id].cases[0].next;
+            			action = data.boxes[box_id].action;
+			          	let txt = data.boxes[box_id].cases[0].content;
+			        
+			          	createRow(row_id, box_id, action, txt);
+			          	row_id++;
+			          	newRow(row_id, action);
+			          	return false;
+            		}else{
+            			newRow(row_id, 'ad');
+          				$('.hs.new').trigger('click');
+          				return false;
+            		}
+            		
+            	}
+            }
+          });
+
+
         }else{
           let box_id = parseInt($(this).parent().attr('box_id'));
           data.boxes[box_id].cases[0].content = $(this).val();
@@ -664,10 +688,10 @@
             row = row_start + id_input + hs_box + empty_input + empty_input + row_end;
             break;
           case 'as':
-            row = row_start + id_input + empty_input + '<input class="as alexa-box" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0">' + empty_input + row_end;
+            row = row_start + id_input + empty_input + '<input class="as alexa-box box" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0">' + empty_input + row_end;
             break;
           case 'ad':
-            row = row_start + id_input + empty_input + empty_input + '<div class="alexa-box"><input readonly="readonly"  class="ad alexa-box main" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0"><input readonly="readonly"  class="ad alexa-box sub" type="text" value="' + text + '" box_id="' + box_id + '"  idx="0"></div>' + row_end;
+            row = row_start + id_input + empty_input + empty_input + '<div class="alexa-box box" idx="0" ' + '" box_id="' + box_id + '"><input readonly="readonly"  class="ad alexa-box main" type="text" value="' + text[0] + '"  idx=""><input readonly="readonly"  class="ad alexa-box sub" type="text" value="' + text[1] + '" box_id="' + box_id + '"  idx="0"></div>' + row_end;
             break;
         }
         $('.alexa-section').append(row);
@@ -705,6 +729,7 @@
           $('.hs.new').trigger('click');
         }
       }
+
 
     });
   </script>
